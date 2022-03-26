@@ -155,7 +155,7 @@ public class TradePatternCheck {
 
     }*/
 
-    public String trandBefore(int toIndex, int levelCheckTrend, ArrayList<Candle> candlesList) {
+    public String trendBefore(int toIndex, int rangeTrade, ArrayList<Candle> candlesList) {
         // Метод проверяет тренд(n свеч) до рассматриваемой свечи
                 /* Условия:
         1. Через каждые промежутки верхний уровень тела свечи должен быть больше/меньше и больше/меньше.
@@ -164,10 +164,11 @@ public class TradePatternCheck {
         3. суммарная длина тел одного цвета, чья тенденция идет д.б. больше. 65%/35% хотя бы.
         4. желательно, чтобы тело каждой следующей свечи находилось выше предыдущей */
 
-        int checkCount = 0;
+        int checkBullTrendCount = 0;
+        int checkBearTrendCount = 0;
 
-        // Проверяем есть ли у нас достаточное количество свеч, что анализа
-        if (toIndex < levelCheckTrend + 1) {
+        // Проверяем есть ли у нас достаточное количество свеч
+        if (toIndex < rangeTrade + 1) {
             return "";
         }
 
@@ -175,22 +176,31 @@ public class TradePatternCheck {
         double sumLengthBlackCandles = 0;
         double sumLengthWhiteCandles = 0;
         // инициализируем нулевой индекс как n(levelCheckTrend) до текущего(toIndex) индекса свечи
-        int nullIndex = toIndex - levelCheckTrend;
+        int nullIndex = toIndex - rangeTrade;
         // создадим лист каждого пятого индекса, чтобы можно было сравнивать(для удобства)
         // мы не знаем сколько у нас должно получится таких индексов, поэтому Лист.
-        ArrayList<Integer> fiveIndexList = new ArrayList<>();
+        ArrayList<Integer> ThreeIndexList = new ArrayList<>();
         // Аналогично, нам нужен список из индексов 1, и следующих за каждым пятым, для удобства сравнения
-        ArrayList<Integer> nextFiveIndexList = new ArrayList<>();
+        ArrayList<Integer> nextThreeIndexList = new ArrayList<>();
         // посчитаем сумму длин белой и черной свеч
-        nextFiveIndexList.add(nullIndex);
+        nextThreeIndexList.add(nullIndex);
+        // выберем жесткость проверки исходя из радиуса проверки
+        int inflexible;
+        if (rangeTrade < 12) inflexible = 2;
+        else inflexible = rangeTrade / 3;
+//        else if (rangeTrade > 10 && rangeTrade < 21) inflexible = rangeTrade / 3;
+//        else inflexible = rangeTrade / 4;
+
+
         for (int i = nullIndex; i < toIndex; i++) {
             // добавим каждую пятую свечку в список-лист
-            if (((toIndex - i - levelCheckTrend) % 4 == 0) && ((toIndex - i - levelCheckTrend) != 0)) {
-                fiveIndexList.add(i);
+            if (((rangeTrade - (toIndex - i)) % inflexible == 0) && ((rangeTrade - (toIndex - i)) != 0)) {
+                ThreeIndexList.add(i);
                 if (i != toIndex - 1) { // если индекс не последний, от исключений
-                    nextFiveIndexList.add(i + 1);
+                    nextThreeIndexList.add(i + 1);
                 }
             }
+
 
 //            3. суммарная длина тел одного цвета, чья тенденция идет д.б. больше. 65%/35% хотя бы.
             if (candlesList.get(i).isWhiteColor()) {
@@ -199,40 +209,14 @@ public class TradePatternCheck {
         }
         // мы предполагаем, что у нас бычий тренд (sumLengthWhiteCandles > sumLengthBlackCandles(65%/35%)
         if (sumLengthWhiteCandles > sumLengthBlackCandles * 65 / 35) {
-            // проверка
-            if (toIndex == 231) {
-                System.out.println("\n\n\n");
-            }
-
-            // Тело последней свечи точно должно находиться выше чем тело 1-ой свечи.
+            // 1. Тело последней свечи точно должно находиться выше чем тело 1-ой свечи.
             if (candlesList.get(toIndex - 1).getUpBodyPrice() > candlesList.get(nullIndex).getUpBodyPrice()) {
-                // проверка
-                if (toIndex == 231) {
-                    System.out.println("Тело последней свечи точно должно находиться выше чем тело 1-ой свечи");
-                    System.out.println("(выше) candlesList.get(toIndex - 1).getUpBodyPrice() = " + candlesList.get(toIndex - 1).getUpBodyPrice());
-                    System.out.println("candlesList.get(nullIndex).getUpBodyPrice() = " + candlesList.get(nullIndex).getUpBodyPrice());
-                    System.out.println();
-                }
-//            2. Тело каждой n-ой свечи точно должно находиться выше чем тело 1-ой свечи.
-
-                for (int i = 0; i < fiveIndexList.size(); i++) {
-                    if (candlesList.get(fiveIndexList.get(i)).getUpBodyPrice() > candlesList.get(nullIndex).getUpBodyPrice()) {
-                        // проверка
-                        if (toIndex == 231) {
-                            System.out.println("2. Тело каждой 4-ой свечи точно должно находиться выше чем тело 1-ой свечи.");
-                            System.out.println("(больше) candlesList.get(fiveIndexList.get(i)).getUpBodyPrice() = " + candlesList.get(fiveIndexList.get(i)).getUpBodyPrice());
-                            System.out.println("candlesList.get(nullIndex).getUpBodyPrice() = " + candlesList.get(nullIndex).getUpBodyPrice());
-                            System.out.println();
-                        }
-                        // 3. Тело каждой 5-ой свечи точно должно находиться выше чем тело каждой 1-ой свечи.
-                        if (candlesList.get(fiveIndexList.get(i)).getUpBodyPrice() > candlesList.get(nextFiveIndexList.get(i)).getUpBodyPrice()) {
-                            // проверка
-                            if (toIndex == 231) {
-                                System.out.println("3. Тело каждой 4-ой свечи точно должно находиться выше чем тело КАЖДОЙ 1-ой ");
-                                System.out.println("(больше) candlesList.get(fiveIndexList.get(i)).getUpBodyPrice() = " + candlesList.get(fiveIndexList.get(i)).getUpBodyPrice());
-                                System.out.println("candlesList.get(nextFiveIndexList.get(i)).getUpBodyPrice() = " + candlesList.get(nextFiveIndexList.get(i)).getUpBodyPrice());
-                            }
-                            checkCount++;
+                // 2. Тело каждой n-ой свечи точно должно находиться выше чем тело 1-ой свечи.
+                for (int i = 0; i < ThreeIndexList.size(); i++) {
+                    if (candlesList.get(ThreeIndexList.get(i)).getUpBodyPrice() > candlesList.get(nullIndex).getUpBodyPrice()) {
+                        // 3. Тело каждой n-ой свечи точно должно находиться выше чем тело каждой 1-ой свечи.
+                        if (candlesList.get(ThreeIndexList.get(i)).getUpBodyPrice() > candlesList.get(nextThreeIndexList.get(i)).getUpBodyPrice()) {
+                            checkBullTrendCount++;
                         }
                     }
                 }
@@ -240,22 +224,40 @@ public class TradePatternCheck {
         }
         // если не бычий тренд не пройдет, то возможно у нас медвежий тренд (sumLengthBlackCandles > sumLengthWhiteCandles(65%/35%)
         else if (sumLengthBlackCandles >= sumLengthWhiteCandles * 65 / 35) {
+            // 1. Тело последней свечи точно должно находиться ниже чем тело 1-ой свечи.
+            if (candlesList.get(toIndex - 1).getDownBodyPrice() < candlesList.get(nullIndex).getDownBodyPrice()) {
+                // 2. Тело каждой n-ой свечи точно должно находиться ниже чем тело 1-ой свечи.
+                for (int i = 0; i < ThreeIndexList.size(); i++) {
+                    if (candlesList.get(ThreeIndexList.get(i)).getDownBodyPrice() < candlesList.get(nullIndex).getDownBodyPrice()) {
+                        // 3. Тело каждой n-ой свечи точно должно находиться выше чем тело каждой 1-ой свечи.
+                        if (candlesList.get(ThreeIndexList.get(i)).getDownBodyPrice() < candlesList.get(nextThreeIndexList.get(i)).getDownBodyPrice()) {
+                            checkBearTrendCount++;
+                        }
+                    }
+                }
+            }
 
         } else {  // если условие не сработало, то проверим по мини-участкам
 
         }
-        if (checkCount != fiveIndexList.size()) return "";
-        else return candlesList.get(toIndex).getDate()
-                + ": в диапазоне "
-                + levelCheckTrend
-                + " свеч ДО у нас явный бычий тренд(↑) (индекс:" + toIndex + ")";
+        if (checkBullTrendCount == ThreeIndexList.size()) {
+            return candlesList.get(toIndex).getDate()
+                    + ": в диапазоне "
+                    + rangeTrade
+                    + " свеч ДО у нас явный бычий тренд(↑) (индекс:" + toIndex + ")";
+        } else if (checkBearTrendCount == ThreeIndexList.size()) {
+            return "\t" + candlesList.get(toIndex).getDate()
+                    + ": в диапазоне "
+                    + rangeTrade
+                    + " свеч ДО у нас явный медвежий тренд(↓) (индекс:" + toIndex + ")";
+        } else return "";
     }
 
-    public void trandAfter(int toIndex) {
+    public void trendAfter(int toIndex) {
         // Метод проверяет тренд после рассматриваемой свечи
     }
 
-    public void miniTrandType() {
+    public void miniTrendType() {
         /* Если не удовлетвроряет хоть одному условию, то нужно:
         1. длинный(20свеч) тренд не явный
         2. разделить на 4 мини-участка (по 5 свеч).
