@@ -1,5 +1,7 @@
 package com.company;
 
+import java.text.DecimalFormat;
+
 import static java.lang.Math.*;
 
 public class Candle {
@@ -22,6 +24,7 @@ public class Candle {
     private final String date;
 
     public Candle(Double minPrice, Double maxPrice, Double openDayPrice, Double closeDayPrice, String date) {
+        DecimalFormat decimalFormat = new DecimalFormat( "#,####" );
         this.minPrice = minPrice;
         this.maxPrice = maxPrice;
         this.openDayPrice = openDayPrice;
@@ -32,8 +35,6 @@ public class Candle {
         if (openDayPrice < closeDayPrice) {  // определяем цвет свечи
             this.whiteColor = true;
         }
-        upBodyPrice = maxPrice - upShadowLength;
-        downBodyPrice = minPrice + downShadowLength;
         // длина всей свечи
         candleLength = abs(maxPrice - minPrice);
         // длина тела свечи
@@ -42,8 +43,16 @@ public class Candle {
         if (whiteColor) upShadowLength = maxPrice - closeDayPrice;
         else upShadowLength = maxPrice - openDayPrice;
         // длина нижней тени
-        if (whiteColor) downShadowLength = openDayPrice - minPrice;
-        else downShadowLength = closeDayPrice - minPrice;
+        if (whiteColor) {
+            downShadowLength = openDayPrice - minPrice;
+            upBodyPrice = closeDayPrice;
+            downBodyPrice = openDayPrice;
+        }
+        else {
+            downShadowLength = closeDayPrice - minPrice;
+            upBodyPrice = openDayPrice;
+            downBodyPrice = closeDayPrice;
+        }
         // отношение длины тела свечи ко всей длине свечи
         bodyToCandleRatio = bodyLength / candleLength;
         // отношение длины нижней тени ко всей длине свечи

@@ -35,11 +35,14 @@ public class ReadFileDB {
         for (String dbOneLine : masDB) {
             String[] pricesCandle = dbOneLine.split("\t");
             candlesList.add(new Candle(
+                    // сразу оставили только 5 знаков после запятой (просто отсекли)
                     Double.parseDouble(pricesCandle[0]),
                     Double.parseDouble(pricesCandle[1]),
                     Double.parseDouble(pricesCandle[2]),
                     Double.parseDouble(pricesCandle[3]),
                     pricesCandle[4]));
+
+
         }
         /*// Проверка
         for (int i = 0; i < candlesList.size(); i++) {

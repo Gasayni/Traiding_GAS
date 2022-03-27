@@ -35,7 +35,8 @@ public class Main {
 //        System.out.println("повешенных и молотов = " + countHammerOrHanged);
 
         System.out.println(candlesList.size());
-        tradeCheckMinMaxMethod.trendCheck(235, 25, candlesList);
+        tradeCheckMinMaxMethod.trendCheck(210, 25, candlesList);
+        // на 200 и 25 - цикл бесконечный
     }
 
     public static void main(String[] args) {
