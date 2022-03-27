@@ -21,6 +21,92 @@ public class TradeCheckMinMaxMethod {
         System.out.println("Рассматриваем общий участок от " + candlesList.get(firstIndex).getDate() + " и до " + candlesList.get(endIndex).getDate());
 
 
+        // На рассматриваемом общем участке найдем сразу все локальные экстремумы
+        for (int i = firstIndex + 3; i <= endIndex - 3; i++) {
+            int k = localMinMaxSearch(i, candlesList);
+            if (k != -1) {
+                list1.add(list1.size() - 1, localMinMaxSearch(i, candlesList));
+            }
+        }
+
+        // Теперь рассмотрим каждый под-участок
+        while (list1.size() > 1) {
+            // далее работаем с под-участками
+            firstIndex = list1.get(0);
+            endIndex = list1.get(1);
+            // Проверка
+            System.out.println();
+            // выводим список для наглядности
+            for (Integer i : list1) {
+                System.out.print(candlesList.get(i).getDate() + "\t");
+            }
+            System.out.println();
+            System.out.println("Рассматриваем под-участок от " + candlesList.get(firstIndex).getDate() + " и до " + candlesList.get(endIndex).getDate());
+
+
+            // Если под-участок нулевой, т.е. первый элемент и есть последний
+            if (endIndex == firstIndex) {
+                list1.remove(0);
+                // Проверка
+                System.out.println("Под-участок нулевой, он нам не нужен");
+            } else {
+                // На участке от firstIndex до minMaxList.get(0) тренд:
+                String nameTrend = candlesTradeCheckMethod(firstIndex, endIndex, candlesList);
+                System.out.println("На участке от "
+                        + candlesList.get(firstIndex).getDate()
+                        + " до "
+                        + candlesList.get(endIndex).getDate()
+                        + " Тренд: "
+                        + nameTrend);
+
+                // как только мы закончили с этим участком
+                // нужно перейти к другой под-участок
+                // для этого нужно удалить рассмотренный под-участок
+                list1.remove(0);
+            }
+            /*
+
+
+
+            // Если под-участок МАЛЕНЬКИЙ ( < 6 )
+            else if (endIndex - firstIndex < 6) {
+                // Проверка
+                System.out.println("под-участок состоит из менее 4 свеч (" + (endIndex - firstIndex) + ")");
+
+                // На участке от firstIndex до minMaxList.get(0) тренд:
+                String nameTrend = candlesTradeCheckMethod(firstIndex, endIndex, candlesList);
+                System.out.println("На участке от "
+                        + candlesList.get(firstIndex).getDate()
+                        + " до "
+                        + candlesList.get(endIndex).getDate()
+                        + " Тренд: "
+                        + nameTrend);
+
+                // как только мы закончили с этим участком
+                // нужно перейти к другой под-участок
+                // для этого нужно удалить рассмотренный под-участок
+                list1.remove(0);
+            }
+
+            else {
+                // Проверка
+                System.out.println("под-участок больше 5 свеч (" + (endIndex - firstIndex) + ")");
+
+                // если бычий тренд (мин левее мах)
+                if (candlesList.get(firstIndex).getUpBodyPrice() < candlesList.get(endIndex).getUpBodyPrice()) {
+                    // Проверка
+                    System.out.println("на под-участке тренд бычий");
+                }
+            }
+        }
+
+
+
+
+
+
+
+
         // Если общий участок МЕНЕЕ 6 свеч, то просто сравниваем
         if (endIndex - firstIndex < 6) {
             // Проверка
@@ -39,8 +125,7 @@ public class TradeCheckMinMaxMethod {
             // нужно перейти к другой под-участок
             // для этого нужно удалить рассмотренный под-участок
             list1.remove(0);
-        }
-        else {
+        } else {
             // Проверка
             System.out.println("общий участок больше 3 свеч (" + (endIndex - firstIndex) + ")");
 
@@ -141,14 +226,14 @@ public class TradeCheckMinMaxMethod {
                     // list1.get(2) - это уже 3-ее значение,
                     // но если посмотреть выше, то в любом случае наш лист расширится еще как минимум на 2
                     // т.о. исключения быть не может
-                    if (minMaxList.get(0) == endIndex - 1 || minMaxList.get(1) == endIndex - 1){
+                    if (minMaxList.get(0) == endIndex - 1 || minMaxList.get(1) == endIndex - 1) {
                         list1.set(2, (list1.get(2) - 1));
                         list1.remove(1);
                         // Проверка
                         System.out.println("пропущенную справа свечу (при поиске экстремумов) добавляем в следующий под-участок");
                     }
                 }
-            }
+            }*/
         }
     }
 
@@ -256,5 +341,39 @@ public class TradeCheckMinMaxMethod {
         } else if (flagBearCheck && checkBearTrendCount == endIndex - firstIndex) {
             return "bear";
         } else return "sideways";
+    }
+
+    private int localMinMaxSearch(int index, ArrayList<Candle> candlesList) {
+        Нужно правильно задать условия экстремума
+        // смотрим элемент, у него 2 соседние д.б. больше/меньше одновременно
+        if ((candlesList.get(index).getUpBodyPrice() > candlesList.get(index + 1).getUpBodyPrice()
+                    || candlesList.get(index).getDownBodyPrice() > candlesList.get(index + 1).getDownBodyPrice())
+                && candlesList.get(index).getUpBodyPrice() > candlesList.get(index + 2).getUpBodyPrice()
+                && (candlesList.get(index).getUpBodyPrice() > candlesList.get(index - 1).getUpBodyPrice()
+                    || candlesList.get(index).getDownBodyPrice() > candlesList.get(index - 1).getDownBodyPrice())
+                && candlesList.get(index).getUpBodyPrice() > candlesList.get(index - 2).getUpBodyPrice()
+
+                && (candlesList.get(index + 1).getUpBodyPrice() > candlesList.get(index + 2).getUpBodyPrice()
+//                    || candlesList.get(index + 1).getUpBodyPrice() > candlesList.get(index + 3).getUpBodyPrice()
+                    || candlesList.get(index + 1).getDownBodyPrice() > candlesList.get(index + 2).getDownBodyPrice())
+                && (candlesList.get(index - 1).getUpBodyPrice() > candlesList.get(index - 2).getUpBodyPrice()
+//                    || candlesList.get(index - 1).getUpBodyPrice() > candlesList.get(index - 3).getUpBodyPrice()
+                    || candlesList.get(index - 1).getDownBodyPrice() > candlesList.get(index - 2).getDownBodyPrice())) {
+            return index;
+        } else if ((candlesList.get(index).getDownBodyPrice() < candlesList.get(index + 1).getDownBodyPrice()
+                    || candlesList.get(index).getUpBodyPrice() < candlesList.get(index + 1).getUpBodyPrice())
+                && candlesList.get(index).getDownBodyPrice() < candlesList.get(index + 2).getDownBodyPrice()
+                && (candlesList.get(index).getDownBodyPrice() < candlesList.get(index - 1).getDownBodyPrice()
+                    || candlesList.get(index).getUpBodyPrice() < candlesList.get(index - 1).getUpBodyPrice())
+                && candlesList.get(index).getDownBodyPrice() < candlesList.get(index - 2).getDownBodyPrice()
+
+                && (candlesList.get(index + 1).getDownBodyPrice() < candlesList.get(index + 2).getDownBodyPrice()
+//                    || candlesList.get(index + 1).getDownBodyPrice() < candlesList.get(index + 3).getDownBodyPrice()
+                    || candlesList.get(index + 1).getUpBodyPrice() < candlesList.get(index + 2).getUpBodyPrice())
+                && (candlesList.get(index - 1).getDownBodyPrice() < candlesList.get(index - 2).getDownBodyPrice()
+//                    || candlesList.get(index - 1).getDownBodyPrice() < candlesList.get(index - 3).getDownBodyPrice()
+                    || candlesList.get(index - 1).getUpBodyPrice() < candlesList.get(index - 2).getUpBodyPrice())) {
+            return index;
+        } else return -1;
     }
 }
