@@ -2,6 +2,7 @@ package com.company;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TradeCheckMinMaxMethod {
     ReadFileDB readFileDB = new ReadFileDB();
@@ -11,252 +12,95 @@ public class TradeCheckMinMaxMethod {
     public void trendCheck(int endIndex, int rangeTrade, ArrayList<Candle> candlesList) {
         // инициализируем нулевой последний индексы
         int firstIndex = endIndex - rangeTrade;
-        List<Integer> minMaxList;
+        List<String[]> outputList = new ArrayList<>();
 
-        List<Integer> list1 = new ArrayList<>();
+
+        List<Integer> rangeList = new ArrayList<>();
         // Нужно разделить общий участок на 3 под-участка, до экстремума, между экстремумами и после
-        list1.add(firstIndex);
-        list1.add(endIndex);
+        rangeList.add(firstIndex);
+        rangeList.add(endIndex);
         // Проверка
-        System.out.println("Рассматриваем общий участок от " + candlesList.get(firstIndex).getDate() + " и до " + candlesList.get(endIndex).getDate());
+        System.out.println();
+        System.out.println("\t\t\t\t\t\t\tРассматриваем общий участок от " + candlesList.get(firstIndex).getDate() + " и до " + candlesList.get(endIndex).getDate());
 
 
         // На рассматриваемом общем участке найдем сразу все локальные экстремумы
-        for (int i = firstIndex + 3; i <= endIndex - 3; i++) {
-            int k = localMinMaxSearch(i, candlesList);
-            if (k != -1) {
-                list1.add(list1.size() - 1, localMinMaxSearch(i, candlesList));
-            }
-        }
+        rangeList = localExtremumSearchMethod(firstIndex, endIndex, candlesList);
+        rangeList.add(0, firstIndex);
+        rangeList.add(endIndex);
 
         // Теперь рассмотрим каждый под-участок
-        while (list1.size() > 1) {
+        while (rangeList.size() > 1) {
             // далее работаем с под-участками
-            firstIndex = list1.get(0);
-            endIndex = list1.get(1);
+            firstIndex = rangeList.get(0);
+            endIndex = rangeList.get(1);
+
             // Проверка
-            System.out.println();
             // выводим список для наглядности
-            for (Integer i : list1) {
-                System.out.print(candlesList.get(i).getDate() + "\t");
+            for (Integer i : rangeList) {
+                System.out.print(i + ":" + candlesList.get(i).getDate() + "\t");
             }
-            System.out.println();
-            System.out.println("Рассматриваем под-участок от " + candlesList.get(firstIndex).getDate() + " и до " + candlesList.get(endIndex).getDate());
+
+            /*System.out.println();
+            System.out.println("Рассматриваем под-участок от "
+                    + candlesList.get(firstIndex).getDate()
+                    + " и до "
+                    + candlesList.get(endIndex).getDate());*/
 
 
             // Если под-участок нулевой, т.е. первый элемент и есть последний
             if (endIndex == firstIndex) {
-                list1.remove(0);
+                rangeList.remove(0);
                 // Проверка
-                System.out.println("Под-участок нулевой, он нам не нужен");
+//                System.out.println("Под-участок нулевой, он нам не нужен");
             } else {
-                // На участке от firstIndex до minMaxList.get(0) тренд:
-                String nameTrend = candlesTradeCheckMethod(firstIndex, endIndex, candlesList);
-                System.out.println("На участке от "
-                        + candlesList.get(firstIndex).getDate()
-                        + " до "
-                        + candlesList.get(endIndex).getDate()
-                        + " Тренд: "
-                        + nameTrend);
+                // На участке от firstIndex до endIndex тренд:
+                String[] outputMas = new String[3];
+                outputMas[0] = candlesList.get(firstIndex).getDate();
+                outputMas[1] = candlesList.get(endIndex).getDate();
+                outputMas[2] = candlesTradeCheckMethod(firstIndex, endIndex, candlesList);
+                outputList.add(outputMas);
 
                 // как только мы закончили с этим участком
                 // нужно перейти к другой под-участок
                 // для этого нужно удалить рассмотренный под-участок
-                list1.remove(0);
-            }
-            /*
-
-
-
-            // Если под-участок МАЛЕНЬКИЙ ( < 6 )
-            else if (endIndex - firstIndex < 6) {
-                // Проверка
-                System.out.println("под-участок состоит из менее 4 свеч (" + (endIndex - firstIndex) + ")");
-
-                // На участке от firstIndex до minMaxList.get(0) тренд:
-                String nameTrend = candlesTradeCheckMethod(firstIndex, endIndex, candlesList);
-                System.out.println("На участке от "
-                        + candlesList.get(firstIndex).getDate()
-                        + " до "
-                        + candlesList.get(endIndex).getDate()
-                        + " Тренд: "
-                        + nameTrend);
-
-                // как только мы закончили с этим участком
-                // нужно перейти к другой под-участок
-                // для этого нужно удалить рассмотренный под-участок
-                list1.remove(0);
-            }
-
-            else {
-                // Проверка
-                System.out.println("под-участок больше 5 свеч (" + (endIndex - firstIndex) + ")");
-
-                // если бычий тренд (мин левее мах)
-                if (candlesList.get(firstIndex).getUpBodyPrice() < candlesList.get(endIndex).getUpBodyPrice()) {
-                    // Проверка
-                    System.out.println("на под-участке тренд бычий");
-                }
+                rangeList.remove(0);
             }
         }
 
 
-
-
-
-
-
-
-        // Если общий участок МЕНЕЕ 6 свеч, то просто сравниваем
-        if (endIndex - firstIndex < 6) {
-            // Проверка
-            System.out.println("общий участок состоит из менее 6 свеч (" + (endIndex - firstIndex) + ")");
-
-            // На участке от firstIndex до endIndex тренд:
-            String nameTrend = candlesTradeCheckMethod(firstIndex, endIndex, candlesList);
+        // Проверка
+        System.out.println("До:");
+        for (String[] sMas : outputList) {
             System.out.println("На участке от "
-                    + candlesList.get(firstIndex).getDate()
+                    + sMas[0]
                     + " до "
-                    + candlesList.get(endIndex).getDate()
+                    + sMas[1]
                     + " Тренд: "
-                    + nameTrend);
-
-            // как только мы закончили с этим участком
-            // нужно перейти к другой под-участок
-            // для этого нужно удалить рассмотренный под-участок
-            list1.remove(0);
-        } else {
-            // Проверка
-            System.out.println("общий участок больше 3 свеч (" + (endIndex - firstIndex) + ")");
-
-            // Мы ищем экстремумы
-            minMaxList = minMaxSearchMethod(firstIndex, endIndex, candlesList);
-            // Проверка
-            System.out.println(" на общем участке мин = " + candlesList.get(minMaxList.get(0)).getDate() + ", мах = " + candlesList.get(minMaxList.get(1)).getDate());
-            System.out.println(" на общем участке мин = " + minMaxList.get(0) + ", мах = " + minMaxList.get(1));
-
-            // если бычий тренд (мин левее мах)
-            if (minMaxList.get(0) < minMaxList.get(1)) {
-                // Проверка
-                System.out.println("на общем участке тренд бычий");
-                // добавляем мах и мин как новые под-участки в лист
-                list1.add(1, minMaxList.get(1)); // сначала добавляем мах
-                list1.add(1, minMaxList.get(0)); // потом мин
-            } else if (minMaxList.get(1) < minMaxList.get(0)) {
-                // Проверка
-                System.out.println("на общем участке тренд медвежий");
-                // добавляем мин и мах как новые под-участки в лист
-                list1.add(1, minMaxList.get(0)); // сначала добавляем мин
-                list1.add(1, minMaxList.get(1)); // потом мах
-            }
-
-            // заходим внутрь участка
-            while (list1.size() > 1) {
-                // далее работаем с под-участками
-                firstIndex = list1.get(0);
-                endIndex = list1.get(1);
-                // Проверка
-                System.out.println();
-                // выводим список для наглядности
-                for (Integer i : list1) {
-                    System.out.print(candlesList.get(i).getDate() + "\t");
-                }
-                System.out.println();
-                System.out.println("Рассматриваем под-участок от " + candlesList.get(firstIndex).getDate() + " и до " + candlesList.get(endIndex).getDate());
-
-
-                // Если под-участок нулевой, т.е. первый элемент и есть последний
-                if (endIndex == firstIndex) {
-                    list1.remove(0);
-                    // Проверка
-                    System.out.println("Под-участок нулевой, он нам не нужен");
-                }
-                // Если под-участок МАЛЕНЬКИЙ ( < 4 )
-                else if (endIndex - firstIndex < 4) {
-                    // Проверка
-                    System.out.println("под-участок состоит из менее 4 свеч (" + (endIndex - firstIndex) + ")");
-
-                    // На участке от firstIndex до minMaxList.get(0) тренд:
-                    String nameTrend = candlesTradeCheckMethod(firstIndex, endIndex, candlesList);
-                    System.out.println("На участке от "
-                            + candlesList.get(firstIndex).getDate()
-                            + " до "
-                            + candlesList.get(endIndex).getDate()
-                            + " Тренд: "
-                            + nameTrend);
-
-                    // как только мы закончили с этим участком
-                    // нужно перейти к другой под-участок
-                    // для этого нужно удалить рассмотренный под-участок
-                    list1.remove(0);
-                } else {
-                    // Проверка
-                    System.out.println("под-участок больше 3 свеч (" + (endIndex - firstIndex) + ")");
-                    // Мы ищем экстремумы
-                    minMaxList = minMaxSearchMethod(firstIndex, endIndex - 1, candlesList);
-                    // Проверка
-                    System.out.println(" на этом под-участке мин = " + candlesList.get(minMaxList.get(0)).getDate() + ", мах = " + candlesList.get(minMaxList.get(1)).getDate());
-
-                    // если бычий тренд (мин левее мах)
-                    if (minMaxList.get(0) < minMaxList.get(1)) {
-                        // Проверка
-                        System.out.println("на под-участке тренд бычий");
-                        // добавляем мах как новый под-участок в лист
-                        list1.add(1, minMaxList.get(1)); // сначала добавляем мах
-                        // Проверка
-                        System.out.println("добавляем мах как новый под-участок в лист");
-                    }
-                    // если медвежий тренд (мах левее мин)
-                    else {
-                        // Проверка
-                        System.out.println("на под-участке тренд медвежий");
-
-                        // добавляем мин и мах как новые под-участки в лист
-                        list1.add(1, minMaxList.get(0)); // сначала добавляем мин
-                        list1.add(1, minMaxList.get(1)); // потом мах
-                        // Проверка
-                        System.out.println("добавляем мах и мин как новые под-участки в лист");
-                    }
-                    // мы в minMaxSearchMethod сдвигаем участок влево на 1, чтобы найти новый экстремум,
-                    // а здесь мы пропущенную свечу добавляем в следующий под-участок, тем самым расширяя влево
-                    // тем самым, чтобы не учитываемые свечи(в minMaxSearchMethod) не потерялись
-
-                    // хоть на первый взгляд может показаться, что команда ниже может привести к исключению переполнения
-                    // потому в условии цикла указано, минимум 2 значения можно. А если будет как раз 2 значения, то
-                    // list1.get(2) - это уже 3-ее значение,
-                    // но если посмотреть выше, то в любом случае наш лист расширится еще как минимум на 2
-                    // т.о. исключения быть не может
-                    if (minMaxList.get(0) == endIndex - 1 || minMaxList.get(1) == endIndex - 1) {
-                        list1.set(2, (list1.get(2) - 1));
-                        list1.remove(1);
-                        // Проверка
-                        System.out.println("пропущенную справа свечу (при поиске экстремумов) добавляем в следующий под-участок");
-                    }
-                }
-            }*/
+                    + sMas[2]);
         }
-    }
 
-    private List<Integer> minMaxSearchMethod(int firstIndex, int endIndex, ArrayList<Candle> candlesList) {
-        // Инициализируем мин и макс значение тела свечи - первым телом
-        List<Integer> minMaxList = new ArrayList<>();
-        minMaxList.add(0, firstIndex);
-        minMaxList.add(1, firstIndex);
-//        if (firstIndex == endIndex) {
-//            return null;
-//        }
-
-        // Идем по всему участку и ищем экстремумы (в высших точках тел)
-        for (int i = firstIndex; i <= endIndex; i++) {
-            if (candlesList.get(i).getDownBodyPrice() < candlesList.get(minMaxList.get(0)).getDownBodyPrice()) {
-                minMaxList.set(0, i);
-            }
-            if (candlesList.get(i).getUpBodyPrice() > candlesList.get(minMaxList.get(1)).getUpBodyPrice()) {
-                minMaxList.set(1, i);
-            }
-
+        for (int i = 1; i < outputList.size(); /*i++*/) {
+            // Если тренд на предыдущем участке совпадает с нынешним участком,
+            // тогда правльнее было бы объединить эти участки
+            if (outputList.get(i)[2].equals(outputList.get(i - 1)[2])) {
+                // объеденяю участки, путем изменения начальной даты нынешнего участка на начальную дату предыдущего
+                outputList.set(i, new String[]{outputList.get(i - 1)[0], outputList.get(i)[1], outputList.get(i)[2]});
+                // и, конечно удаляю предыдущий участок
+                outputList.remove(i - 1);
+            } else i++;
         }
-        return minMaxList;
+
+        System.out.println();
+        for (String[] sMas : outputList) {
+            System.out.println("На участке от "
+                    + sMas[0]
+                    + " до "
+                    + sMas[1]
+                    + " Тренд: "
+                    + sMas[2]);
+        }
+
     }
 
     private String candlesTradeCheckMethod(int firstIndex, int endIndex, ArrayList<Candle> candlesList) {
@@ -269,19 +113,37 @@ public class TradeCheckMinMaxMethod {
         double sumLengthBlackCandles = 0;
         double sumLengthWhiteCandles = 0;
 
-        for (int i = firstIndex; i <= endIndex; i++) {
+        /*// Проверка
+        if (firstIndex == 185) {
+            System.out.println();
+        }*/
+
+        for (int i = firstIndex; i < endIndex; i++) {
             // суммируем длины тел одного цвета
             if (candlesList.get(i).isWhiteColor()) {
                 sumLengthWhiteCandles += candlesList.get(i).getBodyLength();
             } else sumLengthBlackCandles += candlesList.get(i).getBodyLength();
+
+        }
+
+
+        // если все свечи белые или черные, то легко
+        if (sumLengthWhiteCandles - sumLengthBlackCandles == 0) {
+            return "Бычий";
+        } else if (sumLengthWhiteCandles > sumLengthBlackCandles * 70 / 100) {
+            return "Бычий";
+        } else if (sumLengthBlackCandles - sumLengthWhiteCandles == 0) {
+            return "Медвежий";
+        } else if ((sumLengthBlackCandles > sumLengthWhiteCandles * 70 / 100)) {
+            return "Медвежий";
         }
 
         // Суммарная длина тел одного цвета, чья тенденция идет д.б. больше, хотя бы 60% / 40%
         // мы предполагаем, что у нас бычий тренд (60%/40%)
-        if (sumLengthWhiteCandles > sumLengthBlackCandles * 60 / 40) {                                      // Наверно не нужно смотреть на вес тел
+        else if (sumLengthWhiteCandles > sumLengthBlackCandles * 55 / 45) {                                      // Наверно не нужно смотреть на вес тел
             // 1. Тело последней свечи точно должно находиться выше чем тело 1-ой свечи.
             if (candlesList.get(endIndex).getUpBodyPrice() > candlesList.get(firstIndex).getUpBodyPrice()) {
-                for (int i = firstIndex; i <= endIndex - 1; i++) {
+                for (int i = firstIndex; i < endIndex; i++) {
                     // Все тела рассматриваемых свеч (можно кроме одной) д.б. выше предыдущих свеч
                     if (candlesList.get(i + 1).getUpBodyPrice() > candlesList.get(i).getUpBodyPrice()) {
                         checkBullTrendCount++; // Нам нужно накопить число = (endIndex - firstIndex)
@@ -307,8 +169,8 @@ public class TradeCheckMinMaxMethod {
         }
 
         // мы предполагаем, что у нас медвежий тренд (60% / 40%)
-        else if ((sumLengthBlackCandles > sumLengthWhiteCandles * 60 / 40)) {
-            // 1. Тело последней и предпоследней свечи точно должно находиться ниже чем тело 1-ой свечи.
+        else if ((sumLengthBlackCandles > sumLengthWhiteCandles * 55 / 45)) {
+            // 1. Тело последней свечи точно должно находиться ниже чем тело 1-ой свечи.
             if (candlesList.get(endIndex).getDownBodyPrice() < candlesList.get(firstIndex).getDownBodyPrice()) {
                 for (int i = firstIndex; i <= endIndex - 1; i++) {
                     // Все тела рассматриваемых свеч (можно кроме одной) д.б. ниже предыдущих свеч
@@ -328,52 +190,122 @@ public class TradeCheckMinMaxMethod {
                                     // или чтобы разность низших точек была больше чем разность высших точек тел
                                     || (difDownBodyPrice > difUpBodyPrice)) {
                                 flagBearCheck = true;
+                            } else {
+                                flagBearCheck = false;
+                                break;
                             }
+                        } else {
+                            flagBearCheck = false;
+                            break;
                         }
-                    } else flagBullCheck = true;
+                    } else flagBearCheck = true;
                 }
             }
         }
 
-
-        if (flagBullCheck && checkBullTrendCount == endIndex - firstIndex) {
-            return "bull";
-        } else if (flagBearCheck && checkBearTrendCount == endIndex - firstIndex) {
-            return "bear";
-        } else return "sideways";
+        if (flagBullCheck && checkBullTrendCount > (endIndex - firstIndex) * 0.7) {
+            return "Бычий";
+        } else if (flagBearCheck && checkBearTrendCount > (endIndex - firstIndex) * 0.7) {
+            return "Медвежий";
+        } else return "Боковой";
     }
 
-    private int localMinMaxSearch(int index, ArrayList<Candle> candlesList) {
-        Нужно правильно задать условия экстремума
-        // смотрим элемент, у него 2 соседние д.б. больше/меньше одновременно
-        if ((candlesList.get(index).getUpBodyPrice() > candlesList.get(index + 1).getUpBodyPrice()
-                    || candlesList.get(index).getDownBodyPrice() > candlesList.get(index + 1).getDownBodyPrice())
-                && candlesList.get(index).getUpBodyPrice() > candlesList.get(index + 2).getUpBodyPrice()
-                && (candlesList.get(index).getUpBodyPrice() > candlesList.get(index - 1).getUpBodyPrice()
-                    || candlesList.get(index).getDownBodyPrice() > candlesList.get(index - 1).getDownBodyPrice())
-                && candlesList.get(index).getUpBodyPrice() > candlesList.get(index - 2).getUpBodyPrice()
+    private List<Integer> localExtremumSearchMethod(int firstIndex, int endIndex, ArrayList<Candle> candlesList) {
+        List<Integer> extremumList = new ArrayList<>();
+        boolean checkFlag;
 
-                && (candlesList.get(index + 1).getUpBodyPrice() > candlesList.get(index + 2).getUpBodyPrice()
+        // находим все идеальные экстремумы, у него 2 соседние д.б. больше/меньше одновременно
+        for (int i = firstIndex + 2; i <= endIndex - 2; i++) {
+        // Если это 1 или последний элемент, то нужно сравнивать по другому
+            if (i == firstIndex + 1 || i == endIndex - 1) {
+                if (candlesList.get(i).getUpBodyPrice() > candlesList.get(i + 1).getUpBodyPrice()
+                        && candlesList.get(i).getUpBodyPrice() > candlesList.get(i - 1).getUpBodyPrice()) {
+
+                    // это идеальный вариант, если он проходит, то просто говорим, что это локальный экстремум
+                    extremumList.add(i);
+                } else if (candlesList.get(i).getDownBodyPrice() <= candlesList.get(i + 1).getDownBodyPrice()
+                        && candlesList.get(i).getDownBodyPrice() <= candlesList.get(i - 1).getDownBodyPrice()) {
+                    // это идеальный вариант, если он проходит, то просто говорим, что это локальный экстремум
+                    extremumList.add(i);
+                }
+
+            } else {
+                if ((candlesList.get(i).getUpBodyPrice() >= candlesList.get(i + 1).getUpBodyPrice()
+                        && candlesList.get(i + 1).getUpBodyPrice() >= candlesList.get(i + 2).getUpBodyPrice()
+                        && candlesList.get(i).getUpBodyPrice() >= candlesList.get(i - 1).getUpBodyPrice()
+                        && candlesList.get(i - 1).getUpBodyPrice() >= candlesList.get(i - 2).getUpBodyPrice())) {
+                    // это идеальный вариант, если он проходит, то просто говорим, что это локальный экстремум
+                    extremumList.add(i);
+
+                } else if (candlesList.get(i).getDownBodyPrice() <= candlesList.get(i + 1).getDownBodyPrice()
+                        && candlesList.get(i + 1).getDownBodyPrice() <= candlesList.get(i + 2).getDownBodyPrice()
+                        && candlesList.get(i).getDownBodyPrice() <= candlesList.get(i - 1).getDownBodyPrice()
+                        && candlesList.get(i - 1).getDownBodyPrice() <= candlesList.get(i - 2).getDownBodyPrice()) {
+                    // это идеальный вариант, если он проходит, то просто говорим, что это локальный экстремум
+                    extremumList.add(i);
+                }
+            }
+        }
+
+        for (int i = firstIndex + 2; i <= endIndex - 2; i++) {
+
+            /*// Проверка
+            if (i == 186) {
+                System.out.println(i);
+            }*/
+
+            if ((candlesList.get(i).getUpBodyPrice() > candlesList.get(i + 1).getUpBodyPrice()
+                    || candlesList.get(i).getDownBodyPrice() > candlesList.get(i + 1).getDownBodyPrice())
+                    && candlesList.get(i).getUpBodyPrice() > candlesList.get(i + 2).getUpBodyPrice()
+                    && (candlesList.get(i).getUpBodyPrice() > candlesList.get(i - 1).getUpBodyPrice()
+                    || candlesList.get(i).getDownBodyPrice() > candlesList.get(i - 1).getDownBodyPrice())
+                    && candlesList.get(i).getUpBodyPrice() > candlesList.get(i - 2).getUpBodyPrice()
+                    && !candlesList.get(i).isWhiteColor()) {
+
+                checkFlag = true;
+                if ((candlesList.get(i + 1).getUpBodyPrice() > candlesList.get(i + 2).getUpBodyPrice()
 //                    || candlesList.get(index + 1).getUpBodyPrice() > candlesList.get(index + 3).getUpBodyPrice()
-                    || candlesList.get(index + 1).getDownBodyPrice() > candlesList.get(index + 2).getDownBodyPrice())
-                && (candlesList.get(index - 1).getUpBodyPrice() > candlesList.get(index - 2).getUpBodyPrice()
-//                    || candlesList.get(index - 1).getUpBodyPrice() > candlesList.get(index - 3).getUpBodyPrice()
-                    || candlesList.get(index - 1).getDownBodyPrice() > candlesList.get(index - 2).getDownBodyPrice())) {
-            return index;
-        } else if ((candlesList.get(index).getDownBodyPrice() < candlesList.get(index + 1).getDownBodyPrice()
-                    || candlesList.get(index).getUpBodyPrice() < candlesList.get(index + 1).getUpBodyPrice())
-                && candlesList.get(index).getDownBodyPrice() < candlesList.get(index + 2).getDownBodyPrice()
-                && (candlesList.get(index).getDownBodyPrice() < candlesList.get(index - 1).getDownBodyPrice()
-                    || candlesList.get(index).getUpBodyPrice() < candlesList.get(index - 1).getUpBodyPrice())
-                && candlesList.get(index).getDownBodyPrice() < candlesList.get(index - 2).getDownBodyPrice()
+                        || candlesList.get(i + 1).getDownBodyPrice() > candlesList.get(i + 2).getDownBodyPrice())
+                        && (candlesList.get(i - 1).getUpBodyPrice() > candlesList.get(i - 2).getUpBodyPrice())
+                        || candlesList.get(i - 1).getDownBodyPrice() > candlesList.get(i - 2).getDownBodyPrice()) {
 
-                && (candlesList.get(index + 1).getDownBodyPrice() < candlesList.get(index + 2).getDownBodyPrice()
-//                    || candlesList.get(index + 1).getDownBodyPrice() < candlesList.get(index + 3).getDownBodyPrice()
-                    || candlesList.get(index + 1).getUpBodyPrice() < candlesList.get(index + 2).getUpBodyPrice())
-                && (candlesList.get(index - 1).getDownBodyPrice() < candlesList.get(index - 2).getDownBodyPrice()
-//                    || candlesList.get(index - 1).getDownBodyPrice() < candlesList.get(index - 3).getDownBodyPrice()
-                    || candlesList.get(index - 1).getUpBodyPrice() < candlesList.get(index - 2).getUpBodyPrice())) {
-            return index;
-        } else return -1;
+                    for (int j : extremumList) {
+                        if (i == j
+                                || i + 1 == j
+                                || i - 1 == j) {
+                            checkFlag = false;
+                            break;
+                        }
+                    }
+                    if (checkFlag) extremumList.add(i);
+                }
+            } else if ((candlesList.get(i).getDownBodyPrice() < candlesList.get(i + 1).getDownBodyPrice()
+                    || candlesList.get(i).getUpBodyPrice() < candlesList.get(i + 1).getUpBodyPrice())
+                    && candlesList.get(i).getDownBodyPrice() < candlesList.get(i + 2).getDownBodyPrice()
+                    && (candlesList.get(i).getDownBodyPrice() < candlesList.get(i - 1).getDownBodyPrice()
+                    || candlesList.get(i).getUpBodyPrice() < candlesList.get(i - 1).getUpBodyPrice())
+                    && candlesList.get(i).getDownBodyPrice() < candlesList.get(i - 2).getDownBodyPrice()
+                    && candlesList.get(i).isWhiteColor()) {
+
+                checkFlag = true;
+                if ((candlesList.get(i + 1).getDownBodyPrice() < candlesList.get(i + 2).getDownBodyPrice()
+                        || candlesList.get(i + 1).getUpBodyPrice() < candlesList.get(i + 2).getUpBodyPrice())
+                        && (candlesList.get(i - 1).getDownBodyPrice() < candlesList.get(i - 2).getDownBodyPrice()
+                        || candlesList.get(i - 1).getUpBodyPrice() < candlesList.get(i - 2).getUpBodyPrice())) {
+
+                    for (int j : extremumList) {
+                        if (i == j
+                                || i + 1 == j
+                                || i - 1 == j) {
+                            checkFlag = false;
+                            break;
+                        }
+                    }
+                    if (checkFlag) extremumList.add(i);
+                }
+
+            }
+        }
+        return extremumList.stream().sorted((x1, x2) -> x1 - x2).collect(Collectors.toList());
     }
 }

@@ -10,33 +10,15 @@ package com.company;
 import java.util.ArrayList;
 
 public class Main {
-    TradePatternCheck tradePatternCheck = new TradePatternCheck();
     TradeCheckMinMaxMethod tradeCheckMinMaxMethod = new TradeCheckMinMaxMethod();
     ReadFileDB readFileDB = new ReadFileDB();
+
+
     {
         readFileDB.init();
 
         ArrayList<Candle> candlesList = readFileDB.getCandlesList();
-        int countHammerOrHanged=0;
-        for (int i=0; i<candlesList.size(); i++) {
-            String s=null;
-            // определим сколько молотов и повешенных всего было
-            /*if (!(s = tradePatternCheck.hammerOrHangedCheck(i, candlesList)).equals("")){
-                countHammerOrHanged++;
-                System.out.println("Дата формирования молота или повешенного: " + s);
-            }*/
-//            String ss = tradePatternCheck.trendBefore(i, 10, candlesList);
-
-//            if (!ss.equals("")) {
-//                System.out.println(ss);
-//            }
-        }
-//        System.out.print("Из " + candlesList.size() +" свеч ");
-//        System.out.println("повешенных и молотов = " + countHammerOrHanged);
-
-        System.out.println(candlesList.size());
-        tradeCheckMinMaxMethod.trendCheck(210, 25, candlesList);
-        // на 200 и 25 - цикл бесконечный
+        tradeCheckMinMaxMethod.trendCheck(150, 25, candlesList);
     }
 
     public static void main(String[] args) {
