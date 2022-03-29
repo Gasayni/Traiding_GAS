@@ -4,25 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TradeCheckMinMaxMethod {
+public class TradeCheckClass {
     ReadFileDB readFileDB = new ReadFileDB();
     ArrayList<Candle> candlesList = readFileDB.getCandlesList();
-//    List<Integer> minMaxList = new ArrayList<>();
 
-    public void trendCheck(int endIndex, int rangeTrade, ArrayList<Candle> candlesList) {
+    public String trendCheck(int endIndex, int rangeTrade, ArrayList<Candle> candlesList) {
         // инициализируем нулевой последний индексы
         int firstIndex = endIndex - rangeTrade;
         List<String[]> outputList = new ArrayList<>();
 
 
         List<Integer> rangeList = new ArrayList<>();
-        // Нужно разделить общий участок на 3 под-участка, до экстремума, между экстремумами и после
         rangeList.add(firstIndex);
         rangeList.add(endIndex);
         // Проверка
-        System.out.println();
-        System.out.println("\t\t\t\t\t\t\tРассматриваем общий участок от " + candlesList.get(firstIndex).getDate() + " и до " + candlesList.get(endIndex).getDate());
-
+//        System.out.println();
+//        System.out.println("\t\t\t\t\t\t\tРассматриваем общий участок от "
+//                + candlesList.get(firstIndex).getDate() + " и до " + candlesList.get(endIndex).getDate());
 
         // На рассматриваемом общем участке найдем сразу все локальные экстремумы
         rangeList = localExtremumSearchMethod(firstIndex, endIndex, candlesList);
@@ -35,24 +33,14 @@ public class TradeCheckMinMaxMethod {
             firstIndex = rangeList.get(0);
             endIndex = rangeList.get(1);
 
-            // Проверка
-            // выводим список для наглядности
-            for (Integer i : rangeList) {
+            // Отладка * выводим список дат для наглядности
+            /*for (Integer i : rangeList) {
                 System.out.print(i + ":" + candlesList.get(i).getDate() + "\t");
-            }
-
-            /*System.out.println();
-            System.out.println("Рассматриваем под-участок от "
-                    + candlesList.get(firstIndex).getDate()
-                    + " и до "
-                    + candlesList.get(endIndex).getDate());*/
-
+            } */
 
             // Если под-участок нулевой, т.е. первый элемент и есть последний
             if (endIndex == firstIndex) {
                 rangeList.remove(0);
-                // Проверка
-//                System.out.println("Под-участок нулевой, он нам не нужен");
             } else {
                 // На участке от firstIndex до endIndex тренд:
                 String[] outputMas = new String[3];
@@ -69,8 +57,8 @@ public class TradeCheckMinMaxMethod {
         }
 
 
-        // Проверка
-        System.out.println("До:");
+        // Отладка * Полный ответ
+        /*System.out.println("До:");
         for (String[] sMas : outputList) {
             System.out.println("На участке от "
                     + sMas[0]
@@ -78,7 +66,7 @@ public class TradeCheckMinMaxMethod {
                     + sMas[1]
                     + " Тренд: "
                     + sMas[2]);
-        }
+        }*/
 
         for (int i = 1; i < outputList.size(); /*i++*/) {
             // Если тренд на предыдущем участке совпадает с нынешним участком,
@@ -91,16 +79,16 @@ public class TradeCheckMinMaxMethod {
             } else i++;
         }
 
-        System.out.println();
-        for (String[] sMas : outputList) {
+        /*for (String[] sMas : outputList) {
             System.out.println("На участке от "
                     + sMas[0]
                     + " до "
                     + sMas[1]
                     + " Тренд: "
                     + sMas[2]);
-        }
-
+        }*/
+        // выводим тренд последнего участка
+        return outputList.get(outputList.size() - 1)[2];
     }
 
     private String candlesTradeCheckMethod(int firstIndex, int endIndex, ArrayList<Candle> candlesList) {
@@ -210,26 +198,46 @@ public class TradeCheckMinMaxMethod {
         } else return "Боковой";
     }
 
-    private List<Integer> localExtremumSearchMethod(int firstIndex, int endIndex, ArrayList<Candle> candlesList) {
+    public List<Integer> localExtremumSearchMethod(int firstIndex, int endIndex, ArrayList<Candle> candlesList) {
         List<Integer> extremumList = new ArrayList<>();
         boolean checkFlag;
 
-        // находим все идеальные экстремумы, у него 2 соседние д.б. больше/меньше одновременно
-        for (int i = firstIndex + 2; i <= endIndex - 2; i++) {
-        // Если это 1 или последний элемент, то нужно сравнивать по другому
-            if (i == firstIndex + 1 || i == endIndex - 1) {
-                if (candlesList.get(i).getUpBodyPrice() > candlesList.get(i + 1).getUpBodyPrice()
-                        && candlesList.get(i).getUpBodyPrice() > candlesList.get(i - 1).getUpBodyPrice()) {
 
-                    // это идеальный вариант, если он проходит, то просто говорим, что это локальный экстремум
-                    extremumList.add(i);
-                } else if (candlesList.get(i).getDownBodyPrice() <= candlesList.get(i + 1).getDownBodyPrice()
-                        && candlesList.get(i).getDownBodyPrice() <= candlesList.get(i - 1).getDownBodyPrice()) {
-                    // это идеальный вариант, если он проходит, то просто говорим, что это локальный экстремум
-                    extremumList.add(i);
+        // находим все идеальные экстремумы, у него 2 соседние д.б. больше/меньше одновременно
+        for (int i = firstIndex; i <= endIndex; i++) {
+
+
+
+            // Отладка
+           /* if (i == 149) {
+                System.out.println(i);
+            }*/
+            if (endIndex - firstIndex < 2) {
+
+            }
+            // Если это 1/2 или предпослдений/последний элемент, то нужно сравнивать по другому
+            else if (i == firstIndex || i == endIndex || i == firstIndex + 1 || i == endIndex - 1) {
+                if (i == firstIndex || i == firstIndex + 1) {
+                    if ((candlesList.get(i).getUpBodyPrice() >= candlesList.get(i + 1).getUpBodyPrice()
+                            && candlesList.get(i).getUpBodyPrice() > candlesList.get(i + 2).getUpBodyPrice())
+                            || (candlesList.get(i).getDownBodyPrice() <= candlesList.get(i + 1).getDownBodyPrice()
+                            && candlesList.get(i).getDownBodyPrice() < candlesList.get(i + 2).getDownBodyPrice())) {
+
+                        // это идеальный вариант, если он проходит, то просто говорим, что это локальный экстремум
+                        extremumList.add(i);
+                    }
+                } else if (i == endIndex || i == endIndex - 1) {
+                    if ((candlesList.get(i).getDownBodyPrice() <= candlesList.get(i - 1).getDownBodyPrice()
+                            && candlesList.get(i).getDownBodyPrice() < candlesList.get(i - 2).getDownBodyPrice())
+                            || (candlesList.get(i).getUpBodyPrice() >= candlesList.get(i - 1).getUpBodyPrice()
+                            && candlesList.get(i).getUpBodyPrice() > candlesList.get(i - 2).getUpBodyPrice())) {
+                        // это идеальный вариант, если он проходит, то просто говорим, что это локальный экстремум
+                        extremumList.add(i);
+                    }
                 }
 
             } else {
+
                 if ((candlesList.get(i).getUpBodyPrice() >= candlesList.get(i + 1).getUpBodyPrice()
                         && candlesList.get(i + 1).getUpBodyPrice() >= candlesList.get(i + 2).getUpBodyPrice()
                         && candlesList.get(i).getUpBodyPrice() >= candlesList.get(i - 1).getUpBodyPrice()
@@ -247,11 +255,11 @@ public class TradeCheckMinMaxMethod {
             }
         }
 
-        for (int i = firstIndex + 2; i <= endIndex - 2; i++) {
 
-            /*// Проверка
-            if (i == 186) {
-                System.out.println(i);
+        for (int i = firstIndex + 2; i <= endIndex - 2; i++) {
+            // Отладка
+            /*if (i == 230){
+                System.out.println();
             }*/
 
             if ((candlesList.get(i).getUpBodyPrice() > candlesList.get(i + 1).getUpBodyPrice()
@@ -303,7 +311,6 @@ public class TradeCheckMinMaxMethod {
                     }
                     if (checkFlag) extremumList.add(i);
                 }
-
             }
         }
         return extremumList.stream().sorted((x1, x2) -> x1 - x2).collect(Collectors.toList());

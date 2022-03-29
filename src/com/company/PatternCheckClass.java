@@ -1,9 +1,11 @@
 package com.company;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class TradePatternCheck {
+public class PatternCheckClass {
     ReadFileDB readFileDB = new ReadFileDB();
+    TradeCheckClass tradeCheckClass = new TradeCheckClass();
     // Для удобства написания кода, выделим последний и предпоследний индексы
     private final int lastIndex = readFileDB.getCountCandles() - 1;
     private final int penultimateIndex = readFileDB.getCountCandles() - 2;
@@ -312,7 +314,7 @@ public class TradePatternCheck {
 
     }
 
-    public boolean hammerOrHanged() {
+    public boolean hammerOrHangedCheckMethod() {
         // Этот метод будет определять модель разворота "Молот" и "Повешенный"
         //                  !!! Определяется по 1 последней свече
 
@@ -328,7 +330,7 @@ public class TradePatternCheck {
         // Идеально, когда верхняя тень вообще отсутствует, тело = 1/4 от всей длины или меньше - это 100% вероятность сигнала
 
         // 2. Нижняя тень д.б. в 2 раза длиннее тела
-        if (candlesList.get(lastIndex).getDownShadowLength() >= candlesList.get(lastIndex).getBodyLength()) {
+        if (candlesList.get(lastIndex).getDownShadowLength() > candlesList.get(lastIndex).getBodyLength() * 2) {
             // 3. Верхняя тень д. отсутствовать или быть очень короткой
             /** !!! У меня будет 1/5 от всей длины свечи - но нужно уточнить*/
             if (candlesList.get(lastIndex).getUpShadowLength() < candlesList.get(lastIndex).getCandleLength() / 5) {
@@ -371,5 +373,124 @@ public class TradePatternCheck {
             }
         }
         return "";
+    }
+
+    public int hammerOrHangedRightCheck(ArrayList<Candle> candlesList) {
+        int countRightPrognosisHammer = 0;
+        int countRightPrognosisHanged = 0;
+
+        // Программа должна на всем диапазоне искать молоты и повешенные, учитывая тренд до них
+        // вывести прогнозируемый тренд после молота/повешенного
+        // вывести фактический тренд
+        // Считать все прогнозы
+        // считать все правльные прогнозы
+        // вывести отношение правильных прогнозов ко всем прогнозам = вероятность успеха
+        List<Integer> extremumList = tradeCheckClass.localExtremumSearchMethod(0, candlesList.size() - 1, candlesList);
+        // Отладка
+        /*System.out.println("extremumList: ");
+        for (int extremum : extremumList) {
+            System.out.print(candlesList.get(extremum).getDate() + "\t");
+        }
+        System.out.println();*/
+
+
+//        System.out.println();
+        for (int i = 0; i < extremumList.size() - 1; i++) {
+            String tradeLastName =
+                    tradeCheckClass.trendCheck(extremumList.get(i + 1),
+                    (extremumList.get(i + 1) - extremumList.get(i)),
+                    candlesList);
+            // Отладка
+            /*if (i == (extremumList.size() - 3)) {
+                System.out.println();
+            }
+//            System.out.println("candlesList.get(extremumList.get(i+1)).getDate(): " + candlesList.get(extremumList.get(extremumList.get(i+1))).getDate());
+//            System.out.println();*/
+
+            // 2. Нижняя тень д.б. в 2 раза длиннее тела
+            if (candlesList.get(extremumList.get(i + 1)).getDownShadowLength()
+                    > candlesList.get(extremumList.get(i + 1)).getBodyLength() * 2) {
+                // 3. Верхняя тень д. отсутствовать или быть очень короткой
+                /** !!! У меня будет 1/5 от всей длины свечи - но нужно уточнить*/
+                if (candlesList.get(extremumList.get(i + 1)).getUpShadowLength()
+                        < candlesList.get(extremumList.get(i + 1)).getCandleLength() / 5) {
+                    // 1. Тело свечи находится в верхней части ценового диапазона, цвет тела не важен
+                    // т.е. нижняя граница тела свечи д.б. выше средней линии свечи
+                    if (tradeLastName.equals("Медвежий")) {
+                        if (candlesList.get(extremumList.get(i + 1)).getOpenDayPrice()
+                                > candlesList.get(extremumList.get(i + 1)).getCandleLength() / 2) {
+                            System.out.println("Свеча " + candlesList.get(extremumList.get(i + 1)).getDate() + " является молотом");
+                            countRightPrognosisHammer ++;
+                        }
+                    } else if (tradeLastName.equals("Бычий")) {
+                        if (candlesList.get(extremumList.get(i + 1)).getCloseDayPrice()
+                                > candlesList.get(extremumList.get(i + 1)).getCandleLength() / 2) {
+                            System.out.println("Свеча " + candlesList.get(extremumList.get(i + 1)).getDate() + " является повешенным");
+                            countRightPrognosisHanged ++;
+                        }
+                    }
+                }
+            }
+        }
+        return countRightPrognosisHammer + countRightPrognosisHanged;
+    }
+
+    public int hammerOrHangedAllCheck(ArrayList<Candle> candlesList) {
+        int countRightPrognosisHammer = 0;
+        int countRightPrognosisHanged = 0;
+
+        // Программа должна на всем диапазоне искать молоты и повешенные, учитывая тренд до них
+        // вывести прогнозируемый тренд после молота/повешенного
+        // вывести фактический тренд
+        // Считать все прогнозы
+        // считать все правльные прогнозы
+        // вывести отношение правильных прогнозов ко всем прогнозам = вероятность успеха
+        // Отладка
+        /*System.out.println("extremumList: ");
+        for (int extremum : extremumList) {
+            System.out.print(candlesList.get(extremum).getDate() + "\t");
+        }
+        System.out.println();*/
+
+
+
+//        System.out.println();
+        for (int i = 0; i < candlesList.size() - 10; i++) {
+            // Отладка
+            /*if (i == (extremumList.size() - 3)) {
+                System.out.println();
+            }
+//            System.out.println("candlesList.get(extremumList.get(i+1)).getDate(): " + candlesList.get(extremumList.get(extremumList.get(i+1))).getDate());
+//            System.out.println();*/
+
+            String tradeLastName = tradeCheckClass.trendCheck(i + 10, 10, candlesList);
+
+            // 2. Нижняя тень д.б. в 2 раза длиннее тела
+            if (candlesList.get(i + 1).getDownShadowLength()
+                    > candlesList.get(i + 1).getBodyLength() * 2) {
+                // 3. Верхняя тень д. отсутствовать или быть очень короткой
+                /** !!! У меня будет 1/5 от всей длины свечи - но нужно уточнить*/
+                if (candlesList.get(i + 1).getUpShadowLength()
+                        < candlesList.get(i + 1).getCandleLength() / 5) {
+                    // 1. Тело свечи находится в верхней части ценового диапазона, цвет тела не важен
+                    // т.е. нижняя граница тела свечи д.б. выше средней линии свечи
+                    if (tradeLastName.equals("Медвежий")) {
+                        if (candlesList.get(i + 1).getOpenDayPrice()
+                                > candlesList.get(i + 1).getCandleLength() / 2) {
+                            System.out.println("Свеча " + candlesList.get(i + 1).getDate() + " является молотом");
+                            countRightPrognosisHammer ++;
+                        }
+                    } else if (tradeLastName.equals("Бычий")) {
+                        if (candlesList.get(i + 1).getCloseDayPrice()
+                                > candlesList.get(i + 1).getCandleLength() / 2) {
+                            System.out.println("Свеча " + candlesList.get(i + 1).getDate()
+                                    + " является повешенным");
+                            countRightPrognosisHanged ++;
+                        }
+                    }
+                }
+            }
+        }
+        return countRightPrognosisHammer + countRightPrognosisHanged;
     }
 }
